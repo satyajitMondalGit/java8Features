@@ -4,6 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.mindtree.covid.analysis.entity.CovidData;
 
-public interface CovidAnalysis extends JpaRepository<CovidData, Integer> {
+public interface CovidDataRepository extends JpaRepository<CovidData, Integer> {
 
 }

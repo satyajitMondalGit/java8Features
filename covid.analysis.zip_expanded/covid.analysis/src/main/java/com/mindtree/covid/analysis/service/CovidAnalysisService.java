@@ -15,6 +15,6 @@ public interface CovidAnalysisService {
 
 	List<ResponseStateDataTO> getStatesDataByDateRange(RequestDateRangeTO dateRangeTo);
 
-	List<ResponseConfirmCaseTO> displayCOnfirmedCasesCompareingTwoStates(RequestConfirmCaseTO requestConfirmCaseTo);
+	List<ResponseConfirmCaseTO> displayConfirmedCasesCompareingTwoStates(RequestConfirmCaseTO requestConfirmCaseTo);
 
 }
