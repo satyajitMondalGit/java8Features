@@ -26,28 +26,28 @@ public class CovidAnalysisController {
 	private CovidAnalysisService covidAnalysisService;
 	
 	
-	@GetMapping("/get/states/name")
+	@GetMapping("/states/")
 	ResponseEntity<List<String>> getStatesName(){
 		
 		
 		return new ResponseEntity<>(covidAnalysisService.getStatesName(),HttpStatus.OK);
 	}
 	
-	@GetMapping("/get/districts/name/{stateCode}")
+	@GetMapping("/state/{stateCode}/districts/")
 	ResponseEntity<List<String>> getDistrictsName(@PathVariable String stateCode){
 		
 		
 		return new ResponseEntity<>(covidAnalysisService.getDistrictsName(stateCode),HttpStatus.OK);
 	}
 
-	@PostMapping("/get/states/data")
+	@PostMapping("/states/data")
 	ResponseEntity<List<ResponseStateDataTO>> getStatesDataByDateRange( @RequestBody RequestDateRangeTO dateRangeTo ){
 		
 	
 		return new ResponseEntity<>(covidAnalysisService.getStatesDataByDateRange(dateRangeTo),HttpStatus.OK);
 	}
 	
-	@PostMapping("/display/confirmed/cases")
+	@PostMapping("/states/confirmed/data")
 	ResponseEntity<List<ResponseConfirmCaseTO>> displayCOnfirmedCasesCompareingTwoStates( @RequestBody RequestConfirmCaseTO requestConfirmCaseTo ){
 		
 		return new ResponseEntity<List<ResponseConfirmCaseTO>>(covidAnalysisService.displayConfirmedCasesCompareingTwoStates(requestConfirmCaseTo),HttpStatus.OK);

@@ -6,11 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.google.common.base.Function;
 import com.mindtree.covid.analysis.dto.RequestConfirmCaseTO;
@@ -22,6 +24,7 @@ import com.mindtree.covid.analysis.exception.StateNotFoundException;
 import com.mindtree.covid.analysis.repository.CovidDataRepository;
 import com.mindtree.covid.analysis.service.CovidAnalysisService;
 
+@Service
 public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 
 	@Autowired
@@ -40,13 +43,8 @@ public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 		List<CovidData> covidDataList = CovidDataRepo.findAll();
 
 		Predicate<CovidData> statesAllRecords = c -> c.getState().equalsIgnoreCase(stateCode);
-		Stream<CovidData> stateRecords = covidDataList.stream().filter(c -> statesAllRecords.test(c));
-		if (stateRecords.count() > 0) {
-			return new ArrayList<String>(stateRecords.collect(Collectors.groupingBy(CovidData::getDistrict)).keySet());
-		} else {
-			throw new StateNotFoundException("No Such State is in the Lst");
-		}
-
+		List<String> dists= covidDataList.stream().filter(c -> statesAllRecords.test(c)).map(c->c.getDistrict()).distinct().collect(Collectors.toList());
+		return dists;
 	}
 
 	@Override
@@ -81,7 +79,56 @@ public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 	@Override
 	public List<ResponseConfirmCaseTO> displayConfirmedCasesCompareingTwoStates(
 			RequestConfirmCaseTO requestConfirmCaseTo) {
-		// TODO Auto-generated method stub
+//		
+//		List<CovidData> covidDataList = CovidDataRepo.findAll();
+//		
+//		BiPredicate<LocalDate, String> validRecordsFilter = (l,s)->{
+//			boolean isInsideDate = false;
+//			boolean isStateValid = false;
+//			
+//			LocalDate startDate = LocalDate.parse(requestConfirmCaseTo.getStartDate());
+//			LocalDate endDate = LocalDate.parse(requestConfirmCaseTo.getEndDate());
+//			
+//			isInsideDate =  l.isAfter(startDate) && l.isBefore(endDate) ? true : false;
+//			
+//			if(s.equalsIgnoreCase(requestConfirmCaseTo.getFirstState())
+//					||s.equalsIgnoreCase(requestConfirmCaseTo.getSecondState())) {
+//				isStateValid =true;
+//			}
+//			
+//			return isInsideDate && isStateValid;
+//		};
+//		
+//		Function<List<CovidData>, ResponseConfirmCaseTO> responsemapper = (L) -> {
+//			
+//			
+//			LocalDate date = L.get(0).getDate();
+//			String fs;
+//			String ss;
+//			
+//			if(L.get(0).getState().equalsIgnoreCase(requestConfirmCaseTo.getFirstState()))
+//			
+//			
+//			return new ResponseConfirmCaseTO(L.get(0).getDate(),L.get(0).getState(),)
+//		}
+//		
+//	//	Map<LocalDate,List<List<CovidData>>> mapResult =
+//				covidDataList.stream()
+//				.filter(c->validRecordsFilter.test(c.getDate(), c.getState()))
+//				.collect(Collectors.groupingBy(CovidData::getDate))
+//				.entrySet().stream()
+//				.map(e -> e.getValue().stream().collect(Collectors.groupingBy(CovidData::getState))
+//							
+//							.entrySet().stream().map( g -> g.getValue().stream()
+//									.reduce((f1, f2) -> new CovidData(f1.getId(),f1.getDate(),
+//											f1.getState(),f1.getDistrict(), f1.getTested(),
+//											f1.getConfirmed()+f2.getConfirmed(),f1.getRecovered()))))
+//				.map(mapper)
+//							
+//				
+//				
+//				;
+//		
 		return null;
 	}
 
