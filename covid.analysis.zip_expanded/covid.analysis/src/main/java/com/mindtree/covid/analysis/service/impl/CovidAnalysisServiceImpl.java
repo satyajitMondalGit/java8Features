@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Function;
@@ -20,7 +20,7 @@ import com.mindtree.covid.analysis.dto.RequestDateRangeTO;
 import com.mindtree.covid.analysis.dto.ResponseConfirmCaseTO;
 import com.mindtree.covid.analysis.dto.ResponseStateDataTO;
 import com.mindtree.covid.analysis.entity.CovidData;
-import com.mindtree.covid.analysis.exception.StateNotFoundException;
+import com.mindtree.covid.analysis.exception.InvalidStateCodeException;
 import com.mindtree.covid.analysis.repository.CovidDataRepository;
 import com.mindtree.covid.analysis.service.CovidAnalysisService;
 
@@ -29,22 +29,40 @@ public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 
 	@Autowired
 	private CovidDataRepository CovidDataRepo;
+	
+	@Value("${invalidStateCode}")
+	String invaidStateCode;
 
 	@Override
 	public List<String> getStatesName() {
-		List<CovidData> covidDataList = CovidDataRepo.findAll();
-
-		return new ArrayList<String>(
-				covidDataList.stream().collect(Collectors.groupingBy(CovidData::getState)).keySet());
+//		List<CovidData> covidDataList = CovidDataRepo.findAll();
+//
+//		return new ArrayList<String>(
+//				covidDataList.stream().collect(Collectors.groupingBy(CovidData::getState)).keySet());
+		
+		return CovidDataRepo.findAllStates();
 	}
 
 	@Override
 	public List<String> getDistrictsName(String stateCode) {
-		List<CovidData> covidDataList = CovidDataRepo.findAll();
+//		List<CovidData> covidDataList = CovidDataRepo.findAll();
+//
+//		Predicate<CovidData> statesAllRecords = c -> c.getState().equalsIgnoreCase(stateCode);
+//
+//		Optional<CovidData> listOfSatateData = covidDataList.stream().filter(c -> statesAllRecords.test(c)).findAny();
+//		if (listOfSatateData.isPresent()) {
+//
+//			return covidDataList.stream().filter(c -> statesAllRecords.test(c)).map(c -> c.getDistrict()).distinct()
+//					.sorted((c1, c2) -> c1.compareTo(c2)).collect(Collectors.toList());
+//		} else {
+//			throw new InvalidStateCodeException("No Such State present. Please enter a valid State name");
+//		}
 
-		Predicate<CovidData> statesAllRecords = c -> c.getState().equalsIgnoreCase(stateCode);
-		List<String> dists= covidDataList.stream().filter(c -> statesAllRecords.test(c)).map(c->c.getDistrict()).distinct().collect(Collectors.toList());
-		return dists;
+		List<CovidData> covidDataList = CovidDataRepo.findByState("stateCode").orElseThrow(()->new InvalidStateCodeException(invaidStateCode));
+		
+		System.out.println(covidDataList.size());
+			
+		return covidDataList.stream().map(c -> c.getDistrict()).distinct().sorted((c1, c2) -> c1.compareTo(c2)).collect(Collectors.toList());
 	}
 
 	@Override
