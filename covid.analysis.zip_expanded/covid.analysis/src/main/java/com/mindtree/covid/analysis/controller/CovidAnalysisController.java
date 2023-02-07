@@ -2,6 +2,8 @@ package com.mindtree.covid.analysis.controller;
 
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,21 +36,21 @@ public class CovidAnalysisController {
 	}
 	
 	@GetMapping("/state/{stateCode}/districts/")
-	ResponseEntity<List<String>> getDistrictsName(@PathVariable String stateCode){
+	ResponseEntity<List<String>> getDistrictsName(@Valid @PathVariable String stateCode){
 		
 		
 		return new ResponseEntity<>(covidAnalysisService.getDistrictsName(stateCode),HttpStatus.OK);
 	}
 
 	@PostMapping("/states/data")
-	ResponseEntity<List<ResponseStateDataTO>> getStatesDataByDateRange( @RequestBody RequestDateRangeTO dateRangeTo ){
+	ResponseEntity<List<ResponseStateDataTO>> getStatesDataByDateRange( @Valid @RequestBody RequestDateRangeTO dateRangeTo ){
 		
 	
 		return new ResponseEntity<>(covidAnalysisService.getStatesDataByDateRange(dateRangeTo),HttpStatus.OK);
 	}
 	
 	@PostMapping("/states/confirmed/data")
-	ResponseEntity<List<ResponseConfirmCaseTO>> displayCOnfirmedCasesCompareingTwoStates( @RequestBody RequestConfirmCaseTO requestConfirmCaseTo ){
+	ResponseEntity<List<ResponseConfirmCaseTO>> displayCOnfirmedCasesCompareingTwoStates( @Valid @RequestBody RequestConfirmCaseTO requestConfirmCaseTo ){
 		
 		return new ResponseEntity<List<ResponseConfirmCaseTO>>(covidAnalysisService.displayConfirmedCasesCompareingTwoStates(requestConfirmCaseTo),HttpStatus.OK);
 	}

@@ -18,5 +18,7 @@ public class ResponseStateDataTO {
 	
 	private LocalDate date;
 	private String state;
+	private int testedTotal;
 	private int confirmedTotal;
+	private int recoveredTotal;
 }

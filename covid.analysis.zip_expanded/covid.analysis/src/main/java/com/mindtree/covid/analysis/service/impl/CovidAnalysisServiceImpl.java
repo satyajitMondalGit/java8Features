@@ -20,6 +20,7 @@ import com.mindtree.covid.analysis.dto.RequestDateRangeTO;
 import com.mindtree.covid.analysis.dto.ResponseConfirmCaseTO;
 import com.mindtree.covid.analysis.dto.ResponseStateDataTO;
 import com.mindtree.covid.analysis.entity.CovidData;
+import com.mindtree.covid.analysis.exception.InvalidDateRangeException;
 import com.mindtree.covid.analysis.exception.InvalidStateCodeException;
 import com.mindtree.covid.analysis.repository.CovidDataRepository;
 import com.mindtree.covid.analysis.service.CovidAnalysisService;
@@ -29,7 +30,7 @@ public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 
 	@Autowired
 	private CovidDataRepository CovidDataRepo;
-	
+
 	@Value("${invalidStateCode}")
 	String invaidStateCode;
 
@@ -39,7 +40,7 @@ public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 //
 //		return new ArrayList<String>(
 //				covidDataList.stream().collect(Collectors.groupingBy(CovidData::getState)).keySet());
-		
+
 		return CovidDataRepo.findAllStates();
 	}
 
@@ -58,96 +59,87 @@ public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 //			throw new InvalidStateCodeException("No Such State present. Please enter a valid State name");
 //		}
 
-		List<CovidData> covidDataList = CovidDataRepo.findByState("stateCode").orElseThrow(()->new InvalidStateCodeException(invaidStateCode));
-		
-		System.out.println(covidDataList.size());
-			
-		return covidDataList.stream().map(c -> c.getDistrict()).distinct().sorted((c1, c2) -> c1.compareTo(c2)).collect(Collectors.toList());
+		List<CovidData> covidDataList = CovidDataRepo.findByState(stateCode);
+		if (covidDataList == null || covidDataList.size() == 0) {
+			throw new InvalidStateCodeException("bad state code" + stateCode);
+		}
+
+		return covidDataList.stream().map(c -> c.getDistrict()).distinct().sorted((c1, c2) -> c1.compareTo(c2))
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	public List<ResponseStateDataTO> getStatesDataByDateRange(RequestDateRangeTO dateRangeTo) {
-		List<CovidData> covidDataList = CovidDataRepo.findAll();
-
-		Predicate<LocalDate> datainDateRangePredi = (d) -> {
-
-			LocalDate startDate = LocalDate.parse(dateRangeTo.getStartDate());
-			LocalDate endDate = LocalDate.parse(dateRangeTo.getEndDate());
-			return d.isAfter(startDate) && d.isBefore(endDate) ? true : false;
-		};
-
-		Function<CovidData, ResponseStateDataTO> convertFunc = c -> new ResponseStateDataTO(c.getDate(), c.getState(),
-				Integer.valueOf(c.getConfirmed()));
-		Function<ResponseStateDataTO, String> groupingKey = r -> r.getDate() + r.getState();
-		BiFunction<String, Integer, ResponseStateDataTO> resultList = (K,
-				V) -> new ResponseStateDataTO(LocalDate.parse(K.substring(0, 10)), K.substring(10), V);
-
-		Map<String, Integer> resultMap = covidDataList.stream().filter(c -> datainDateRangePredi.test(c.getDate()))
-				.map(c -> convertFunc.apply(c)).collect(Collectors.groupingBy(r -> groupingKey.apply(r),
-						Collectors.summingInt(ResponseStateDataTO::getConfirmedTotal)));
-
-		List<ResponseStateDataTO> opList = new ArrayList<>();
-		for (Entry<String, Integer> e : resultMap.entrySet()) {
-			opList.add(resultList.apply(e.getKey(), e.getValue()));
+		LocalDate startDate = LocalDate.parse(dateRangeTo.getStartDate());
+		LocalDate endDate = LocalDate.parse(dateRangeTo.getEndDate());
+		if (startDate.isAfter(endDate)) {
+			throw new InvalidDateRangeException("StartDate should be come befor end Date");
 		}
 
+		List<CovidData> covidDataList = CovidDataRepo.findByDateRange(startDate, endDate);
+		if (covidDataList == null || covidDataList.size() < 0) {
+			throw new InvalidStateCodeException("No Data Found in between " + dateRangeTo.toString());
+		}
+
+		Function<CovidData, ResponseStateDataTO> convertFunc = c -> new ResponseStateDataTO(c.getDate(), c.getState(),
+				Integer.valueOf(c.getTested()), Integer.valueOf(c.getConfirmed()), Integer.valueOf(c.getRecovered()));
+
+		List<ResponseStateDataTO> opList = covidDataList.stream().map(c -> convertFunc.apply(c))
+				.collect(Collectors.groupingBy(r -> r.getDate() + r.getState())).entrySet().stream()
+				.map(e -> e.getValue().stream().reduce((f1, f2) -> new ResponseStateDataTO(f1.getDate(), f1.getState(),
+						f1.getTestedTotal() + f2.getTestedTotal(), f1.getConfirmedTotal() + f2.getConfirmedTotal(),
+						f1.getRecoveredTotal() + f2.getRecoveredTotal())).orElse(null))
+				.filter(r -> r != null).sorted((r1, r2) -> r1.getDate().compareTo(r2.getDate()))
+				.collect(Collectors.toList());
 		return opList;
 	}
 
 	@Override
 	public List<ResponseConfirmCaseTO> displayConfirmedCasesCompareingTwoStates(
 			RequestConfirmCaseTO requestConfirmCaseTo) {
-//		
-//		List<CovidData> covidDataList = CovidDataRepo.findAll();
-//		
-//		BiPredicate<LocalDate, String> validRecordsFilter = (l,s)->{
-//			boolean isInsideDate = false;
-//			boolean isStateValid = false;
-//			
-//			LocalDate startDate = LocalDate.parse(requestConfirmCaseTo.getStartDate());
-//			LocalDate endDate = LocalDate.parse(requestConfirmCaseTo.getEndDate());
-//			
-//			isInsideDate =  l.isAfter(startDate) && l.isBefore(endDate) ? true : false;
-//			
-//			if(s.equalsIgnoreCase(requestConfirmCaseTo.getFirstState())
-//					||s.equalsIgnoreCase(requestConfirmCaseTo.getSecondState())) {
-//				isStateValid =true;
-//			}
-//			
-//			return isInsideDate && isStateValid;
-//		};
-//		
-//		Function<List<CovidData>, ResponseConfirmCaseTO> responsemapper = (L) -> {
-//			
-//			
-//			LocalDate date = L.get(0).getDate();
-//			String fs;
-//			String ss;
-//			
-//			if(L.get(0).getState().equalsIgnoreCase(requestConfirmCaseTo.getFirstState()))
-//			
-//			
-//			return new ResponseConfirmCaseTO(L.get(0).getDate(),L.get(0).getState(),)
-//		}
-//		
-//	//	Map<LocalDate,List<List<CovidData>>> mapResult =
-//				covidDataList.stream()
-//				.filter(c->validRecordsFilter.test(c.getDate(), c.getState()))
-//				.collect(Collectors.groupingBy(CovidData::getDate))
-//				.entrySet().stream()
-//				.map(e -> e.getValue().stream().collect(Collectors.groupingBy(CovidData::getState))
-//							
-//							.entrySet().stream().map( g -> g.getValue().stream()
-//									.reduce((f1, f2) -> new CovidData(f1.getId(),f1.getDate(),
-//											f1.getState(),f1.getDistrict(), f1.getTested(),
-//											f1.getConfirmed()+f2.getConfirmed(),f1.getRecovered()))))
-//				.map(mapper)
-//							
-//				
-//				
-//				;
-//		
-		return null;
+
+		LocalDate startDate = LocalDate.parse(requestConfirmCaseTo.getStartDate());
+		LocalDate endDate = LocalDate.parse(requestConfirmCaseTo.getEndDate());
+		String firstSt = requestConfirmCaseTo.getFirstState();
+		String secondSt = requestConfirmCaseTo.getSecondState();
+		if (startDate.isAfter(endDate)) {
+			throw new InvalidDateRangeException("StartDate should be come befor end Date");
+		}
+
+		List<CovidData> covidDataList = CovidDataRepo.findByStatesAndDateRange(firstSt, secondSt, startDate, endDate);
+		if (covidDataList == null || covidDataList.size() < 0) {
+			throw new InvalidStateCodeException("No Data Found " + requestConfirmCaseTo.toString());
+		}
+		System.out.println(covidDataList.size());
+
+		Function<List<CovidData>, ResponseConfirmCaseTO> convertFunc = list -> {
+			LocalDate d = list.get(0).getDate();
+			int fConfirm = 0;
+			int sconFirm = 0;
+			for (CovidData c : list) {
+				if (c.getState().equalsIgnoreCase(firstSt)) {
+					fConfirm = Integer.valueOf(c.getConfirmed());
+				}
+				if (c.getState().equalsIgnoreCase(secondSt)) {
+					sconFirm = Integer.valueOf(c.getConfirmed());
+				}
+			}
+			return new ResponseConfirmCaseTO(d, firstSt, fConfirm, secondSt, sconFirm);
+		};
+
+		BiFunction<String, String, String> addConfirmFunc = (s1, s2) -> String
+				.valueOf(Integer.valueOf(s1) + Integer.valueOf(s2));
+
+		List<ResponseConfirmCaseTO> opList = covidDataList.stream()
+				.collect(Collectors.groupingBy(r -> r.getDate() + r.getState())).entrySet().stream()
+				.map(e -> e.getValue().stream()
+						.reduce((f1, f2) -> new CovidData(f1.getId(), f1.getDate(), f1.getState(), f1.getDistrict(),
+								f1.getTested(), addConfirmFunc.apply(f1.getConfirmed(), f2.getConfirmed()),
+								f1.getRecovered()))
+						.orElse(null))
+				.filter(r -> r != null).collect(Collectors.groupingBy(CovidData::getDate)).entrySet().stream()
+				.map(e -> convertFunc.apply(e.getValue())).collect(Collectors.toList());
+		return opList;
 	}
 
 }

@@ -15,7 +15,7 @@ public class ResponseConfirmCaseTO {
 
 	private LocalDate date;
 	private String firstState;
-	private String firstStateConfirmedTotal;
+	private int firstStateConfirmedTotal;
 	private String secondState;
-	private String secondStateConfirmedTotal;
+	private int secondStateConfirmedTotal;
 }
