@@ -50,7 +50,7 @@ public class CovidAnalysisController {
 	}
 	
 	@PostMapping("/states/confirmed/data")
-	ResponseEntity<List<ResponseConfirmCaseTO>> displayCOnfirmedCasesCompareingTwoStates( @Valid @RequestBody RequestConfirmCaseTO requestConfirmCaseTo ){
+	ResponseEntity<List<ResponseConfirmCaseTO>> displayConfirmedCasesCompareingTwoStates( @Valid @RequestBody RequestConfirmCaseTO requestConfirmCaseTo ){
 		
 		return new ResponseEntity<List<ResponseConfirmCaseTO>>(covidAnalysisService.displayConfirmedCasesCompareingTwoStates(requestConfirmCaseTo),HttpStatus.OK);
 	}
