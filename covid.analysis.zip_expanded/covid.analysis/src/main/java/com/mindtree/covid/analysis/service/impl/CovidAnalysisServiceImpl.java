@@ -3,6 +3,7 @@ package com.mindtree.covid.analysis.service.impl;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Function;
@@ -31,9 +33,11 @@ public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 	@Autowired
 	private CovidDataRepository CovidDataRepo;
 
-	@Value("${invalidStateCode}")
-	String invaidStateCode;
-
+	@Autowired
+	private MessageSource msgSource;
+	
+	
+	
 	@Override
 	public List<String> getStatesName() {
 //		List<CovidData> covidDataList = CovidDataRepo.findAll();
@@ -61,7 +65,7 @@ public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 
 		List<CovidData> covidDataList = CovidDataRepo.findByState(stateCode);
 		if (covidDataList == null || covidDataList.size() == 0) {
-			throw new InvalidStateCodeException("bad state code" + stateCode);
+			throw new InvalidStateCodeException(msgSource.getMessage("invalid.state.message", null, Locale.ENGLISH));
 		}
 
 		return covidDataList.stream().map(c -> c.getDistrict()).distinct().sorted((c1, c2) -> c1.compareTo(c2))
@@ -73,12 +77,12 @@ public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 		LocalDate startDate = LocalDate.parse(dateRangeTo.getStartDate());
 		LocalDate endDate = LocalDate.parse(dateRangeTo.getEndDate());
 		if (startDate.isAfter(endDate)) {
-			throw new InvalidDateRangeException("StartDate should be come befor end Date");
+			throw new InvalidDateRangeException(msgSource.getMessage("invalid.date.range.message", null, Locale.ENGLISH));
 		}
 
 		List<CovidData> covidDataList = CovidDataRepo.findByDateRange(startDate, endDate);
 		if (covidDataList == null || covidDataList.size() < 0) {
-			throw new InvalidStateCodeException("No Data Found in between " + dateRangeTo.toString());
+			throw new InvalidStateCodeException(msgSource.getMessage("invalid.state.message", null, Locale.ENGLISH));
 		}
 
 		Function<CovidData, ResponseStateDataTO> convertFunc = c -> new ResponseStateDataTO(c.getDate(), c.getState(),
@@ -103,12 +107,12 @@ public class CovidAnalysisServiceImpl implements CovidAnalysisService {
 		String firstSt = requestConfirmCaseTo.getFirstState();
 		String secondSt = requestConfirmCaseTo.getSecondState();
 		if (startDate.isAfter(endDate)) {
-			throw new InvalidDateRangeException("StartDate should be come befor end Date");
+			throw new InvalidDateRangeException(msgSource.getMessage("invalid.date.range.message", null, Locale.ENGLISH));
 		}
 
 		List<CovidData> covidDataList = CovidDataRepo.findByStatesAndDateRange(firstSt, secondSt, startDate, endDate);
 		if (covidDataList == null || covidDataList.size() < 0) {
-			throw new InvalidStateCodeException("No Data Found " + requestConfirmCaseTo.toString());
+			throw new InvalidStateCodeException(msgSource.getMessage("invalid.state.message", null, Locale.ENGLISH));
 		}
 		System.out.println(covidDataList.size());
 
